@@ -1,30 +1,18 @@
 <template>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
-  </nav>
-  <router-view/>
+  <router-view />
+  <router-link to="/new">新規作成</router-link>
 </template>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+<script lang="ts">
+import { defineComponent, provide } from 'vue'
+import TodoStore, { todoKey } from '@/store/todo'
 
-nav {
-  padding: 30px;
-}
-
-nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-nav a.router-link-exact-active {
-  color: #42b983;
-}
-</style>
+export default defineComponent({
+  name: 'App',
+  setup () {
+    // ルートコンポーネントでprovide(key,store)を実行すると
+    // 子コンポーネントでinject(key,store)で呼び出し可能となる
+    provide(todoKey, TodoStore)
+  }
+})
+</script>
