@@ -1,6 +1,5 @@
 <template>
   <router-view />
-  <router-link to="/new">新規作成</router-link>
 </template>
 
 <script lang="ts">

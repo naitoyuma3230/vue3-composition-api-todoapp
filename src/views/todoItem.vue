@@ -1,46 +1,39 @@
 <template>
   <h2>TODO一覧</h2>
-  <ul>
-    <todo-items
-      v-for="todo in todoStore.state.todos"
-      :key="todo.id"
-      :todo="todo"
-      @click-title="clickTitle"
-      @click-delete="clickDelete"
-    >
-    </todo-items>
-  </ul>
+  <div v-if="error">
+    {{ error }}
+  </div>
+  <!-- 非同期コンポーネントをラップするSuspense -->
+  <!-- fallbackスロットを使用したローディング画面 -->
+  <Suspense>
+    <template #default>
+    <AsyncTodos />
+    </template>
+    <template #fallback>
+      <div>Loading...</div>
+    </template>
+  </Suspense>
+  <router-link to="/new">新規作成</router-link>
 </template>
+
 <script lang="ts">
-import { defineComponent, inject } from 'vue'
-import { useRouter } from 'vue-router'
-import { todoKey } from '@/store/todo'
-import TodoItems from '@/components/TodoItems.vue'
+import { defineComponent, ref, onErrorCaptured } from 'vue'
+import AsyncTodos from '@/components/AsyncTodos.vue'
 
 export default defineComponent({
-  name: 'TodoItem',
   components: {
-    TodoItems
+    AsyncTodos
   },
   setup () {
-    const todoStore = inject(todoKey)
-    if (!todoStore) {
-      throw new Error('todoStore is not provided')
-    }
-    const router = useRouter()
-
-    const clickDelete = (id: number) => {
-      todoStore.deleteTodo(id)
-    }
-
-    const clickTitle = (id: number) => {
-      router.push(`/edit/${id}`)
-    }
+    const error = ref<unknown>(null)
+    // コンポーネント内のエラーをキャッチ
+    onErrorCaptured((e) => {
+      error.value = e
+      return true
+    })
 
     return {
-      todoStore,
-      clickDelete,
-      clickTitle
+      error
     }
   }
 })

@@ -1,55 +1,55 @@
 import { InjectionKey, reactive, readonly } from 'vue'
 import { Todo, TodoState, TodoStore, Params } from '@/store/todo/types'
+import Repository, { TODOS } from '@/clients/RepositoryFactory'
+
+const TodoRepository = Repository[TODOS]
 
 // Interface,type実装
 
 // Todo型オブジェクトの配列
-const mockTodo: Todo[] = [
-  {
-    id: 1,
-    title: 'todo1',
-    description: '1つ目',
-    status: 'waiting',
-    createdAt: new Date('2020-12-01'),
-    updatedAt: new Date('2020-12-01')
-  },
-  {
-    id: 2,
-    title: 'todo2',
-    description: '2つ目',
-    status: 'waiting',
-    createdAt: new Date('2020-12-02'),
-    updatedAt: new Date('2020-12-02')
-  },
-  {
-    id: 3,
-    title: 'todo3',
-    description: '3つ目',
-    status: 'working',
-    createdAt: new Date('2020-12-03'),
-    updatedAt: new Date('2020-12-04')
-  }
-]
+// const mockTodo: Todo[] = [
+//   {
+//     id: 1,
+//     title: 'todo1',
+//     description: '1つ目',
+//     status: 'waiting',
+//     createdAt: new Date('2020-12-01'),
+//     updatedAt: new Date('2020-12-01')
+//   },
+//   {
+//     id: 2,
+//     title: 'todo2',
+//     description: '2つ目',
+//     status: 'waiting',
+//     createdAt: new Date('2020-12-02'),
+//     updatedAt: new Date('2020-12-02')
+//   },
+//   {
+//     id: 3,
+//     title: 'todo3',
+//     description: '3つ目',
+//     status: 'working',
+//     createdAt: new Date('2020-12-03'),
+//     updatedAt: new Date('2020-12-04')
+//   }
+// ]
 
 // 型をTodoStateで解決しreactive()でオブジェクトをリアクティブ対応させる
 const state = reactive<TodoState>({
-// TodoStateはTodoオブジェクトの配列
-  todos: mockTodo
+  // TodoStateはTodoオブジェクトの配列
+  // todos: mockTodo
+  todos: []
 })
 
-// 現在時間の登録処理
-// Params = Pick<Todo,'title' | 'description' | 'status'>
-// ParamsはPick＝初期化対象のTodoオブジェクトと…文字列の共用体型？
-const intitializeTodo = (todo: Params) => {
-  const date = new Date()
-  return {
-    id: date.getTime(),
-    title: todo.title,
-    description: todo.description,
-    status: todo.status,
-    createdAt: date,
-    updatedAt: date
-  } as Todo
+// localstorageからgetAll
+const fetchTodos = async () => {
+  state.todos = await TodoRepository.getAll()
+}
+
+// localstorageからget(id)
+const fetchTodo = async (id: number) => {
+  const todo = await TodoRepository.get(id)
+  state.todos.push(todo)
 }
 
 const getTodo = (id: number) => {
@@ -62,23 +62,29 @@ const getTodo = (id: number) => {
 }
 
 // 現在時間の登録をしてtodosリストに追加
-const addTodo = (todo: Params) => {
-  state.todos.push(intitializeTodo(todo))
+const addTodo = async (todo: Params) => {
+  // Localstorage操作を行う非同期関数
+  // 解決済みPromiseオブジェクトを返す
+  const result = await TodoRepository.create(todo)
+  state.todos.push(result)
 }
 
 // 引数：todoオブジェクト、id
 // todosからidに一致するtodoのindexを取得し、渡されたtodoオブジェクトで更新する
-const updateTodo = (id: number, todo: Todo) => {
+const updateTodo = async (id: number, todo: Todo) => {
+  // Localstorage操作を行う非同期関数
+  const result = await TodoRepository.update(id, todo)
   const index = state.todos.findIndex((todo) => todo.id === id)
   if (index === -1) {
     throw new Error(`cannot find todo by id:${id}`)
   }
-  state.todos[index] = todo
+  state.todos[index] = result
 }
 
 // 引数id
 // idに一致しないtodoでリストを作り直す（一致するtodoの削除）
 const deleteTodo = (id: number) => {
+  TodoRepository.delete(id)
   state.todos = state.todos.filter((todo) => todo.id !== id)
 }
 
@@ -87,10 +93,13 @@ const deleteTodo = (id: number) => {
 // 各メソッドを設定（keyとvalueの変数名が同じ時valueを省略できる）
 const todoStore: TodoStore = {
   state: readonly(state),
+  fetchTodos,
+  fetchTodo,
   getTodo,
   addTodo,
   updateTodo,
   deleteTodo
+
 }
 
 // defaultでは名前なしexportとなり1つのオブジェクトのみ出力できる

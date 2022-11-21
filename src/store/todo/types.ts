@@ -23,8 +23,10 @@ export interface TodoState {
 export type Params = Pick<Todo, 'title' | 'description' | 'status'>;
 
 export interface TodoStore {
-// DeepReadOnly（メソッドでの変更のみ可能なinterface）のジェネリクスをTodoState型で解決
+  // DeepReadOnly（メソッドでの変更のみ可能なinterface）のジェネリクスをTodoState型で解決
   state: DeepReadonly<TodoState>;
+  fetchTodos: () => void;
+  fetchTodo: (id: number) => void;
   getTodo: (id: number) => void;
   addTodo: (todo: Params) => void;
   updateTodo: (id: number, todo: Todo) => void;
